@@ -12,15 +12,12 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-# to get a string like this run:
-# openssl rand -hex 32
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 app = FastAPI()
 
-# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,17 +26,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# In-memory storage (replace with a database in production)
 users = {}
 verification_codes = {}
 
-# Email configuration (replace with your SMTP server details)
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USERNAME = "steveweng414@gmail.com"
@@ -48,6 +40,9 @@ SMTP_PASSWORD = "xmgq txlt vvuw gmpx"
 class UserRegistration(BaseModel):
     email: EmailStr
     password: str
+
+class ResendVerification(BaseModel):
+    email: EmailStr
 
 class VerificationRequest(BaseModel):
     email: EmailStr
@@ -143,6 +138,17 @@ async def verify(request: VerificationRequest):
     del verification_codes[request.email]
 
     return {"message": "User successfully registered"}
+
+@app.post("/resend-verification")
+async def resend_verification(emailModel: ResendVerification):
+    if emailModel.email not in verification_codes:
+        raise HTTPException(status_code=400, detail="User is either already verified or does not exist")
+
+    new_code = generate_verification_code()
+    verification_codes[emailModel.email] = new_code
+    send_verification_email(emailModel.email, new_code)
+
+    return {"message": "New verification code sent to email"}
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
