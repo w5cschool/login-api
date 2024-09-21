@@ -18,6 +18,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 app = FastAPI()
 
+# 跨域处理
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -37,6 +38,8 @@ SMTP_PORT = 587
 SMTP_USERNAME = "steveweng414@gmail.com"
 SMTP_PASSWORD = "xmgq txlt vvuw gmpx"
 
+
+# 入参模型定义
 class UserRegistration(BaseModel):
     email: EmailStr
     password: str
